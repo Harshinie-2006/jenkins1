@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotor Fault Detector | SSN Project</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 font-sans min-h-screen p-8">
+
+    <header class="mb-10 text-center">
+        <h1 class="text-3xl font-bold text-emerald-500">SSN RotorGuard AI</h1>
+        <p class="text-zinc-400">Real-Time Predictive Maintenance Dashboard</p>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-xl">
+            <h3 class="text-zinc-400 text-sm font-medium uppercase tracking-wider">AI Classification</h3>
+            <div id="status-text" class="text-4xl font-black mt-2 text-emerald-400">CONNECTING...</div>
+            <div id="confidence-text" class="text-xs text-zinc-500 mt-1">Confidence: 0%</div>
+        </div>
+
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-xl">
+            <h3 class="text-zinc-400 text-sm font-medium uppercase tracking-wider">Vibration Level</h3>
+            <div class="flex items-baseline gap-2">
+                <span id="vibration-val" class="text-4xl font-mono mt-2 text-white">0.00</span>
+                <span class="text-zinc-500 font-bold">Hz</span>
+            </div>
+        </div>
+
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-xl">
+            <h3 class="text-zinc-400 text-sm font-medium uppercase tracking-wider">System Info</h3>
+            <div class="mt-2">
+                <p class="text-white text-lg">Model: <span class="text-emerald-500">CNN-Transformer</span></p>
+                <p class="text-zinc-500 text-sm">Source: sensor_data.xlsx</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="error-msg" class="hidden mt-8 text-center text-rose-500 text-sm bg-rose-500/10 p-2 rounded-lg border border-rose-500/20 max-w-xs mx-auto">
+        Backend Server Offline
+    </div>
+
+    <script>
+        // FUNCTION TO FETCH DATA FROM YOUR FASTAPI
+        async function fetchSensorData() {
+            try {
+                // This connects to the FastAPI backend we wrote
+                const response = await fetch('http://localhost:8000/get-latest');
+                const data = await response.json();
+
+                if (data.error) throw new Error(data.error);
+
+                // Update UI elements
+                document.getElementById('status-text').innerText = data.status.toUpperCase();
+                document.getElementById('confidence-text').innerText = `Confidence: ${data.confidence}`;
+                document.getElementById('vibration-val').innerText = data.vibration.toFixed(2);
+                
+                // Color change logic
+                const statusEl = document.getElementById('status-text');
+                if (data.status === 'Healthy') {
+                    statusEl.className = 'text-4xl font-black mt-2 text-emerald-400';
+                } else {
+                    statusEl.className = 'text-4xl font-black mt-2 text-rose-500';
+                }
+
+                document.getElementById('error-msg').classList.add('hidden');
+            } catch (err) {
+                console.error("Fetch Error:", err);
+                document.getElementById('error-msg').classList.remove('hidden');
+            }
+        }
+
+        // Run fetch every 2 seconds
+        setInterval(fetchSensorData, 2000);
+        // Initial fetch
+        fetchSensorData();
+    </script>
+</body>
+</html>
